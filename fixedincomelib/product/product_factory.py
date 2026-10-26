@@ -41,7 +41,22 @@ class ProductFactory:
         **kwargs: Any,
     ) -> ProductRFRSwap:
 
-        #TODO
+        first, second = cls._tokenize_axis1(axis1)
+        bdc = data_convention.business_day_convention
+        holidays = data_convention.holiday_convention
+        if second is None:                      #"1Y": spot-starting
+            effective_date, term = value_date, first
+        elif first.is_term():                   #"3Mx1Y": start offset x tenor
+            effective_date = add_period(value_date, first.get_term(), bdc, holidays)
+            term = second
+        else:                                   #"dateXdate"
+            effective_date, term = first.get_date(), second
+        return ProductRFRSwap(
+            effective_date, term, data_convention.payment_offset, data_convention.index_str,
+            values, PayOrReceive.from_string(kwargs.get("pay_or_rec", "receive")),
+            kwargs.get("notional", 1e4), data_convention.acc_period, data_convention.acc_basis,
+            data_convention.acc_period, bdc, holidays, 0.0, data_convention.compounding_method,
+        )
         pass
 
     @classmethod
@@ -54,7 +69,23 @@ class ProductFactory:
         **kwargs: Any,
     ) -> ProductOvernightIndexBasisSwap:
 
-        #TODO
+        first, second = cls._tokenize_axis1(axis1)
+        bdc = data_convention.business_day_convention
+        holidays = data_convention.holiday_convention
+        if second is None:
+            effective_date, term = value_date, first
+        elif first.is_term():
+            effective_date = add_period(value_date, first.get_term(), bdc, holidays)
+            term = second
+        else:
+            effective_date, term = first.get_date(), second
+        return ProductOvernightIndexBasisSwap(
+            effective_date, term, data_convention.payment_offset,
+            data_convention.index_1_str, data_convention.index_2_str, values,
+            PayOrReceive.from_string(kwargs.get("pay_or_rec", "receive")),
+            kwargs.get("notional", 1e4), data_convention.acc_period_1, data_convention.acc_basis,
+            data_convention.acc_period_2, bdc, holidays, data_convention.compounding_method,
+        )
         pass
 
     @classmethod

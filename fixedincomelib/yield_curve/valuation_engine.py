@@ -160,7 +160,12 @@ class ValuationEngineProductRfrSwap(ValuationEngineProduct):
         self.floating_leg_engine_ = ValuationEngineInterestRateStream(model, valuation_parameters_collection, product.floating_leg, request)
 
     def calculate_value(self):
-        #TODO
+        self.fixed_leg_engine_.calculate_value()
+        self.floating_leg_engine_.calculate_value()
+        self.value_ = (self.fixed_leg_sign_ * self.fixed_leg_engine_.value +
+                    self.floating_leg_sign_ * self.floating_leg_engine_.value)
+        self.cash_ = (self.fixed_leg_sign_ * self.fixed_leg_engine_.cash +
+                  self.floating_leg_sign_ * self.floating_leg_engine_.cash)
         pass
 
     def create_cash_flows_report(self):
@@ -215,8 +220,11 @@ class ValuationEngineProductOvernightIndexBasisSwap(ValuationEngineProduct):
                 ("Leg 2 index", self.floating_leg_2_sign_, self.floating_leg_2_engine_)]
 
     def calculate_value(self):
-        #TODO
-        pass
+        self.value_, self.cash_ = 0.0, 0.0
+        for _, sign, engine in self._legs():
+            engine.calculate_value()
+            self.value_ += sign * engine.value
+            self.cash_ += sign * engine.cash
 
     def create_cash_flows_report(self):
         return _combine_cashflow_reports(self._legs())
